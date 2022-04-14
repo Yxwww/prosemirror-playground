@@ -4,7 +4,7 @@ import { Schema } from 'prosemirror-model'
 import 'prosemirror-menu/style/menu.css'
 import 'codemirror/lib/codemirror.css'
 
-let baseNodes = baseSchema.spec.nodes
+let baseNodes: any = baseSchema.spec.nodes
 const schema = new Schema({
   nodes: baseNodes.update(
     'code_block',
@@ -19,7 +19,15 @@ import { exitCode } from 'prosemirror-commands'
 import { undo, redo } from 'prosemirror-history'
 
 class CodeBlockView {
-  constructor(node, view, getPos) {
+  node: any
+  view: any
+  dom: any
+  getPos: any
+  incomingChanges = false
+  cm: any
+  updating: boolean
+
+  constructor(node: any, view: any, getPos: any) {
     // Store for later
     this.node = node
     this.view = view
@@ -27,7 +35,7 @@ class CodeBlockView {
     this.incomingChanges = false
 
     // Create a CodeMirror instance
-    this.cm = new CodeMirror(null, {
+    this.cm = new (CodeMirror as any)(null, {
       value: this.node.textContent,
       lineNumbers: true,
       extraKeys: this.codeMirrorKeymap(),
@@ -68,7 +76,7 @@ class CodeBlockView {
   }
   // }
   // nodeview_asProseMirrorSelection{
-  asProseMirrorSelection(doc) {
+  asProseMirrorSelection(doc: any) {
     let offset = this.getPos() + 1
     let anchor = this.cm.indexFromPos(this.cm.getCursor('anchor')) + offset
     let head = this.cm.indexFromPos(this.cm.getCursor('head')) + offset
@@ -76,7 +84,7 @@ class CodeBlockView {
   }
   // }
   // nodeview_setSelection{
-  setSelection(anchor, head) {
+  setSelection(anchor: any, head: any) {
     this.cm.focus()
     this.updating = true
     this.cm.setSelection(
@@ -137,7 +145,7 @@ class CodeBlockView {
   }
   // }
   // nodeview_update{
-  update(node) {
+  update(node: any) {
     if (node.type != this.node.type) return false
     this.node = node
     let change = computeChange(this.cm.getValue(), node.textContent)
@@ -165,7 +173,7 @@ class CodeBlockView {
 // }
 
 // computeChange{
-function computeChange(oldVal, newVal) {
+function computeChange(oldVal: any, newVal: any) {
   if (oldVal == newVal) return null
   let start = 0,
     oldEnd = oldVal.length,
@@ -187,8 +195,8 @@ function computeChange(oldVal, newVal) {
 // arrowHandlers{
 import { keymap } from 'prosemirror-keymap'
 
-function arrowHandler(dir) {
-  return (state, dispatch, view) => {
+function arrowHandler(dir: any) {
+  return (state: any, dispatch: any, view: any) => {
     if (state.selection.empty && view.endOfTextblock(dir)) {
       let side = dir == 'left' || dir == 'up' ? -1 : 1,
         $head = state.selection.$head
@@ -219,13 +227,19 @@ import { EditorView } from 'prosemirror-view'
 import { DOMParser } from 'prosemirror-model'
 import { exampleSetup } from 'prosemirror-example-setup'
 
-window.view = new EditorView(document.querySelector('#editor'), {
+const editorDom = document.querySelector('#editor')
+const content = document.querySelector('#content')
+if (!editorDom || !content) {
+  throw new Error('#editor or !content not found')
+}
+;(window as any).view = new EditorView(editorDom, {
   state: EditorState.create({
-    doc: DOMParser.fromSchema(schema).parse(document.querySelector('#content')),
+    doc: DOMParser.fromSchema(schema).parse(content),
     plugins: exampleSetup({ schema }).concat(arrowHandlers),
   }),
   nodeViews: {
-    code_block: (node, view, getPos) => new CodeBlockView(node, view, getPos),
+    code_block: (node: any, view: any, getPos: any) =>
+      new CodeBlockView(node, view, getPos),
   },
 })
 // }
